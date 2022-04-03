@@ -1,13 +1,20 @@
 'use strict';
 
 import { IAppState, IAppStoreProvider } from "@core/boundaries";
-import { setMarketingCookieUseCase } from "@core/useCases";
+import { setMarketingCookieUseCase, updateCtasWithMarketingParametersUseCase } from "@core/useCases";
 import { AppStoreProvider } from "./providers/appStore.provider";
 import { appStore, IDataStore } from "./store";
 
 export class App {
     private unsubscribeFromStoreHandler: Function;
     private appStoreProvider: IAppStoreProvider = new AppStoreProvider(appStore);
+    private eligibleParameters = [
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'utm_term',
+      'utm_content',
+    ];
 
     public constructor() {
         this.unsubscribeFromStoreHandler =
@@ -21,13 +28,7 @@ export class App {
           this.appStoreProvider,
           document.location,
           document.referrer,
-          [
-            'utm_source',
-            'utm_medium',
-            'utm_campaign',
-            'utm_term',
-            'utm_content',
-          ],
+          this.eligibleParameters,
         )
     }
 
@@ -40,10 +41,14 @@ export class App {
     }
 
     private stateChanged(state: IAppState, actionType: string): void {
-      console.log(state);
-      
       if (actionType === 'set_marketing_cookie') {
-        document.cookie = state.cookieData;
+        state.cookieData.forEach((data:string) => document.cookie = data);
+        updateCtasWithMarketingParametersUseCase(
+          document.cookie,
+          document.body,
+          'data-forward-utms',
+          this.eligibleParameters,
+        );
       }
     }
 }

@@ -26,17 +26,17 @@ export function setMarketingCookieUseCase(
   );
 }
 
-function getMarketingCookieData(url: URL, eligibleParameters: string[]): string {
-  let cookieData = '';
+function getMarketingCookieData(url: URL, eligibleParameters: string[]): string[] {
+  let cookieData = [];
 
   url.searchParams.forEach(
     (value: string, key: string, parent: URLSearchParams) => {
       if (eligibleParameters.indexOf(key) !== -1) {
         // We do not propagate parameters with special characters, except - and _, to prevent Http Parameter Pollution (HPP) attacks
-        cookieData += `${key}=${/[^A-Za-z0-9_\-]/.test(value) ? 'redacted' : value}; `;
+        cookieData.push(`${key}=${/[^A-Za-z0-9_\-]/.test(value) ? 'redacted' : value}; secure; samesite=lax`);
       }
     }
   )
 
-  return cookieData += 'secure; samesite=lax';
+  return cookieData;
 }

@@ -6,7 +6,7 @@ import * as Reducers from './reducers';
 
 export const appStore: IDataStore<IAppState> = {
   state: {
-    cookieData: '',
+    cookieData: [],
     welcomeMessage: 'Welcome to the basic project sandbox!',
   },
   subscribe: function (handler) {

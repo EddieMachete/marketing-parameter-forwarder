@@ -2,5 +2,5 @@
 
 export interface IAppState {
     welcomeMessage: string;
-    cookieData: string;
+    cookieData: string[];
 }

@@ -1,4 +1,3 @@
 'use strict';
 
-export {setMarketingCookieUseCase} from './setMarketingCookie.useCase';
-export {updateCtasWithMarketingParametersUseCase} from './updateCtasWithMarketingParameters.useCase';
+export {updateMarketingTrackingAssetsUseCase} from './updateMarketingTrackingAssets.useCase';

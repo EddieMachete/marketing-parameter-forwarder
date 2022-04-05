@@ -3,12 +3,12 @@
 import { IAppState } from '@core/boundaries';
 import { IActionWithPayload } from './iActionWithPayload';
 
-const reducer = (state: IAppState = null, action: IActionWithPayload<string[]>): IAppState => {
-  if (action.type === 'set_marketing_cookie') {
+const marketingAssetsStatusReducer = (state: IAppState = null, action: IActionWithPayload<string>): IAppState => {
+  if (action.type === 'update_marketing_assets_status') {
     return Object.assign(
       {},
       state,
-      { cookieData: action.payload },
+      { marketingAssetsStatus: action.payload },
     );
   }
 
@@ -16,9 +16,9 @@ const reducer = (state: IAppState = null, action: IActionWithPayload<string[]>):
 };
 
 export {
-  reducer,
+  marketingAssetsStatusReducer,
 };
 
 export default [
-  reducer,
+  marketingAssetsStatusReducer,
 ];

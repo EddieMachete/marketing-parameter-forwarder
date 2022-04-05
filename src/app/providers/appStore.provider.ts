@@ -6,12 +6,12 @@ import { IAppState, IAppStoreProvider } from "@core/boundaries";
 export class AppStoreProvider implements IAppStoreProvider {
   public constructor(private appStore: IDataStore<IAppState>) { }
 
-  setMarketingCookieData(cookieData: string[]): Promise<void> {
+  public updateMarketingAssetsStatus(status: string): Promise<void> {
     this.appStore.dispatch(
       {
-        type: 'set_marketing_cookie',
-        payload: cookieData,
-      },
+        type: 'update_marketing_assets_status',
+        payload: status,
+      }
     );
 
     return Promise.resolve();

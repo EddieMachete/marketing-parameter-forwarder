@@ -1,5 +1,5 @@
 'use strict';
 
 export interface IAppStoreProvider {
-  setMarketingCookieData(data: string[]): Promise<void>;
+  updateMarketingAssetsStatus(status: string): Promise<void>;
 }

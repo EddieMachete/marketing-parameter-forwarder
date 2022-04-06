@@ -26,7 +26,7 @@ export class App {
 
     updateMarketingTrackingAssetsUseCase(
       this.appStoreProvider,
-      document.location,
+      document.location.href,
       document.referrer,
       (cookieData: string) => document.cookie = cookieData,
       document.cookie,

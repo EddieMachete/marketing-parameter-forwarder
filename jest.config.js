@@ -11,6 +11,7 @@ module.exports = {
   roots: [
     "<rootDir>/src"
   ],
-  testEnvironment: 'node',
+  // testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   modulePathIgnorePatterns: [".debug"],
 }

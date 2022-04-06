@@ -16,11 +16,11 @@ import {updateMarketingTrackingAssetsUseCase} from './updateMarketingTrackingAss
  
  Business logic:
  1. When a page on the site loads, the system checks if we are coming from an external source
-    A) If we are coming from an external page, the sustem updates the marketing cookies
+    A) If we are coming from an external page, the system updates the marketing cookies
        1. The system retrieves the white listed parameters from the query string
        2. The system ensures parameters have been cleaned up to protect against script injections
        3. The system sets the marketing cookies
-       4. The system tetrieves the marketing parameters from the URL
+       4. The system retrieves the marketing parameters from the URL
     B) If we are coming from an internal page
        1. The system retrieves the marketing parameters from the existing cookie
  2. The system updates the marketing links on the page by appending the marketing parameters to the search string

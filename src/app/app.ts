@@ -31,8 +31,12 @@ export class App {
       (cookieData: string) => document.cookie = cookieData,
       document.cookie,
       document.body,
-      'data-forward-utms',
       this.eligibleParameters,
+      (ev: MouseEvent) => {
+        const t: Element = ev.target as Element;
+        alert(`Log click on marketing element [${t.getAttribute('data-marketing-name')}]`);
+      },
+      (target: Element) => console.log(`Log impression on marketing element [${target.getAttribute('data-marketing-name')}]`),
     );
   }
 

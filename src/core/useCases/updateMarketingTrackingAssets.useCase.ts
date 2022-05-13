@@ -2,6 +2,9 @@
 
 import { IAppStoreProvider } from '@core/boundaries';
 
+const FORWARD_SEARCH_PARAMS: string = 'forward-search-params';
+const TRACKABLE: string = 'trackable';
+
 /**
  * Executes the business logic needed to store any available marketing parameters in
  * a cookie and to append them to the search string of any link requiring it.
@@ -12,8 +15,9 @@ import { IAppStoreProvider } from '@core/boundaries';
  * @param setCookieDelegate Delegate method that can be called to set a cookie
  * @param cookie
  * @param targetElement Element containing all the anchors to be updated with marketing parameters
- * @param dataAttribute Name of the HTML attribute that identifies anchors that require marketing parameters
  * @param eligibleParameters White list of marketing parameter names needed to prevent script injections
+ * @param impressionDelegate Method to be called when an element is awarded an "impression" (is fully visible within the view port).
+ * @param clickDelegate Method to be called when the marketing element gets clicked to support custom analytics calls.
  */
 export async function updateMarketingTrackingAssetsUseCase(
   appStoreProvider: IAppStoreProvider,
@@ -22,8 +26,9 @@ export async function updateMarketingTrackingAssetsUseCase(
   setCookieDelegate: (cookieData: string) => void,
   cookie: string,
   targetElement: HTMLElement,
-  dataAttribute: string,
   eligibleParameters: string[],
+  clickDelegate: (ev: MouseEvent) => any,
+  impressionDelegate: (target: Element) => any,
 ): Promise<void> {
   await appStoreProvider.updateMarketingAssetsStatus('marketing_assets_status_checking_if_external_source');
   const url = new URL(locationHref);
@@ -32,24 +37,20 @@ export async function updateMarketingTrackingAssetsUseCase(
   const isExternalSource = !referrer || url.hostname !== new URL(referrer).hostname;
   let marketingParameters: { name: string, value: string }[];
 
-  // A) If we are coming from an external page,
+  // 1-A If we are coming from an external page,
   if (isExternalSource) {
     await appStoreProvider.updateMarketingAssetsStatus('marketing_assets_status_updating_cookies');
     marketingParameters = updateMarketingCookies(url, eligibleParameters, setCookieDelegate);
   } else {
-    // B) If we are coming from an internal page
-    //    1. Retrieve the marketing parameters from the existing cookie
+    // 1-B If we are coming from an internal page
+    //     i. Retrieve the marketing parameters from the existing cookie
+    await appStoreProvider.updateMarketingAssetsStatus('marketing_assets_status_getting_parameters_from_cookies');
     marketingParameters = getMarketingParametersFromCookie(cookie, eligibleParameters);
   }
 
-  await appStoreProvider.updateMarketingAssetsStatus('marketing_assets_status_updating_links');
-
-  // 2. The system updates the marketing links on the page by appending the marketing parameters to the search string
-  updateMarketingLinks(
-    marketingParameters,
-    targetElement,
-    dataAttribute,
-  );
+  // 2. The system updates the marketing assets
+  await appStoreProvider.updateMarketingAssetsStatus('marketing_assets_status_updating_marketing_elements');
+  updateMarketingElements(targetElement, marketingParameters, impressionDelegate, clickDelegate);
 
   await appStoreProvider.updateMarketingAssetsStatus('marketing_assets_status_ready');
 }
@@ -65,7 +66,7 @@ function updateMarketingCookies(
   url: URL,
   eligibleParameters: string[],
   setCookieDelegate: (cookieData: string) => void,
-): {name: string, value: string}[] {
+): { name: string, value: string }[] {
   const marketingParameters: { name: string, value: string }[] = [];
 
   // 1. Retrieve the white listed parameters from the query string.
@@ -90,19 +91,49 @@ function updateMarketingCookies(
 
 /**
  * Adds the marketing parameters stored in a cookie to the appropriate HTML anchors
- * @param eligibleParameters White list of marketing parameter names needed to prevent script injections
  * @param marketingParameters Name/value pairs representing the marketing parameters to be added to the marketing links
  * @param targetElement Element containing all the anchors to be updated with marketing parameters
- * @param dataAttribute Name of the HTML attribute that identifies anchors that require marketing parameters
+ * @param impressionDelegate Method to be called when an element is awarded an "impression" (is fully visible within the view port).
+ * @param clickDelegate Method to be called when the marketing element gets clicked to support custom analytics calls.
  */
-function updateMarketingLinks(
-  marketingParameters: { name: string, value: string }[],
+function updateMarketingElements(
   targetElement: HTMLElement,
-  dataAttribute: string,
+  marketingParameters: { name: string, value: string }[],
+  impressionDelegate: (target: Element) => any,
+  clickDelegate: (ev: Event) => any,
 ) {
+  let intersectionObserver: IntersectionObserver;
+  
+  if (window.IntersectionObserver) {
+    intersectionObserver = new IntersectionObserver(
+      (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => handleImpression(entries, observer, impressionDelegate),
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 1.0,
+      },
+    );
+  }
+
   targetElement
-    .querySelectorAll(`a[${dataAttribute}]`)
-    .forEach((anchor) => appendMarketingAttributesToLink(anchor as HTMLAnchorElement, marketingParameters));
+    .querySelectorAll(`[${TRACKABLE}], [${FORWARD_SEARCH_PARAMS}]`)
+    .forEach(
+      (element) => {
+
+        // 2-A) Append marketing search parameters to the search string of marked links
+        if (element.hasAttribute(FORWARD_SEARCH_PARAMS) && element instanceof HTMLAnchorElement) {
+          appendMarketingAttributesToLink(element as HTMLAnchorElement, marketingParameters);
+        }
+
+        // 2-B) Add click and impression events to all marketing elements
+        if (element.hasAttribute(TRACKABLE)) {
+          if (intersectionObserver) {
+            intersectionObserver.observe(element);
+          }
+          element.addEventListener('click', clickDelegate);
+        }
+      }
+    );
 }
 
 /**
@@ -158,4 +189,17 @@ function getMarketingParametersFromCookie(
   );
 
   return marketingParameters;
+}
+
+function handleImpression(
+  entries: IntersectionObserverEntry[],
+  observer: IntersectionObserver,
+  impressionDelegate: (target: Element) => any,
+) {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      observer.unobserve(entry.target);
+      impressionDelegate(entry.target);
+    }
+  });
 }

@@ -1,15 +1,15 @@
 'use strict';
 
 export class SampleWebComponent extends HTMLElement {
-    public static get is(): string { 
-        return 'sample-web-component';
-    }
+  public static get is(): string {
+    return 'sample-web-component';
+  }
 
-    public static get observedAttributes(): string[] {
-        return['message'];
-    }
+  public static get observedAttributes(): string[] {
+    return ['message'];
+  }
 
-    private template: string = `
+  private template: string = `
         <style>
             :host {
                 display: block;
@@ -18,31 +18,31 @@ export class SampleWebComponent extends HTMLElement {
         <h3 bind-to="message">...</h3>
     `;
 
-    private messageElement: HTMLElement;
+  private messageElement: HTMLElement;
 
-    public constructor() {
-        super();
+  public constructor() {
+    super();
 
-        const shadowRoot: ShadowRoot = this.attachShadow({mode: 'open'});
-        shadowRoot.innerHTML = this.template;
-        this.messageElement = shadowRoot.querySelector('[bind-to=message]');
+    const shadowRoot: ShadowRoot = this.attachShadow({ mode: 'open' });
+    shadowRoot.innerHTML = this.template;
+    this.messageElement = shadowRoot.querySelector('[bind-to=message]');
+  }
+
+  public attributeChangedCallback(
+    name: string,
+    oldValue: string,
+    newValue: string,
+    namespace: string,
+  ): void {
+    if (oldValue === newValue) {
+      return;
     }
 
-    public attributeChangedCallback(
-        name: string,
-        oldValue: string,
-        newValue: string,
-        namespace: string,
-      ): void {
-          if (oldValue === newValue) {
-              return;
-          }
-
-          if (name === 'message') {
-            this.messageElement.textContent = newValue;
-            return;
-          }
-      }
+    if (name === 'message') {
+      this.messageElement.textContent = newValue;
+      return;
+    }
+  }
 }
 
 window.customElements.define(SampleWebComponent.is, SampleWebComponent);
